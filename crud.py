@@ -4,7 +4,30 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from core.models import db_helper, User, Profile, Post
+from core.models import db_helper, User, Profile, Post, Order, Product
+
+
+async def create_order(session: AsyncSession, promocode: str | None = None) -> Order:
+    order = Order(promocode=promocode)
+    session.add(order)
+    await session.commit()
+    return order
+
+
+async def create_product(
+        session: AsyncSession,
+        name: str,
+        description: str,
+        price: int,
+) -> Product:
+    product = Product(
+        name=name,
+        description=description,
+        price=price)
+
+    session.add(product)
+    await session.commit()
+    return product
 
 
 async def create_user(session: AsyncSession, username: str) -> User:
@@ -108,7 +131,7 @@ async def get_profiles_with_users_and_users_with_profiles(
         print(profile.user.posts)
 
 
-async def main():
+async def main_relations(session: AsyncSession):
     async with db_helper.session_factory() as session:
         # await create_user(session=session, username="Alice")
         # user_jonh = await get_user_by_username(session=session, username="Jonh")
@@ -116,7 +139,7 @@ async def main():
         await show_users_with_profiles(session=session)
         # await get_users_with_posts(session=session)
         # await get_posts_with_authors(session=session)
-        #await get_users_with_posts_and_profile(session=session)
+        # await get_users_with_posts_and_profile(session=session)
         await get_profiles_with_users_and_users_with_profiles(session=session)
     # await create_posts(
     #     session,
@@ -132,20 +155,21 @@ async def main():
     #     "FastAPI more",
     # )
 
+    # await create_user(session=session, username="Jonh")
+    # await create_user(session=session, username="Mike")
+    # await create_user_profile(
+    #    session=session,
+    #    user_id=user_jonh.id,
+    #    first_name="Jonh",
+    # )
+    # await create_user_profile(
+    #    session=session,
+    #    user_id=user_mike.id,
+    #    first_name="Mike",
+    #    last_name="White",
+    # )
 
-# await create_user(session=session, username="Jonh")
-# await create_user(session=session, username="Mike")
-# await create_user_profile(
-#    session=session,
-#    user_id=user_jonh.id,
-#    first_name="Jonh",
-# )
-# await create_user_profile(
-#    session=session,
-#    user_id=user_mike.id,
-#    first_name="Mike",
-#    last_name="White",
-# )
+
 async def show_users_with_profiles(session: AsyncSession):
     stmt = select(User).options(joinedload(User.profile)).order_by(User.id)
     # result: Result = await session.execute(stmt)
@@ -168,6 +192,39 @@ async def create_posts(
     await session.commit()
     print(posts)
     return posts
+
+
+async def demo_m2m(session: AsyncSession):
+    order_one = await create_order(session)
+    order_promo = await create_order(session, promocode="promo")
+
+    mouse = await create_product(
+        session,
+        name="Mouse",
+        description="Great gaming mouse",
+        price=242
+    )
+
+    keyboard = await create_product(
+        session,
+        name="Keyboard",
+        description="Great gaming keyboard",
+        price=346
+    )
+
+    display = await create_product(
+        session,
+        name="Display",
+        description="Great gaming display",
+        price=415
+    )
+
+
+
+async def main():
+    async with db_helper.session_factory() as session:
+        # await main_relations(session)
+        await demo_m2m(session)
 
 
 if __name__ == "__main__":
