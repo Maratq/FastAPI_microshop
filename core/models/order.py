@@ -1,16 +1,14 @@
-from __future__ import annotations
-
 from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .database import Base
-from .order_product_association import order_product_association_table
+from core.models.database import Base
 
 if TYPE_CHECKING:
     from .product import Product
+    from .order_product_association import OrderProductAssociation
 
 
 class Order(Base):
@@ -20,7 +18,11 @@ class Order(Base):
         default=datetime.utcnow,
     )
     products: Mapped[list["Product"]] = relationship(
-        secondary=order_product_association_table,
+        secondary="order_product_association",
         back_populates="orders",
+    )
 
+    # association between Parent -> Association -> Child
+    products_details: Mapped[list["OrderProductAssociation"]] = relationship(
+        back_populates="order"
     )
