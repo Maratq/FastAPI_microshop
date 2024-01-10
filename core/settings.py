@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
@@ -13,10 +14,20 @@ class DbSettings(BaseModel):
     echo: bool = True
 
 
+class AuthJWT(BaseModel):
+    # private_key_path: Path =
+    # public_key_path: Path =
+    algorithm: str = "RS256"
+    access_token_expire_minutes: int = 15
+    # access_token_expire_minutes: int = 3
+
+
 class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
 
     db: DbSettings = DbSettings()
+
+    auth_jwt: AuthJWT = AuthJWT()
 
     # db_echo: bool = True
 
